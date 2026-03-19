@@ -13,8 +13,7 @@ function getManifest() {
         "isAdult": true,
         "type": "VIDEO",
         "layoutType": "HORIZONTAL",
-        "playerType": "embed",
-        "subtitleCat": true
+        "playerType": "embed"
     });
 }
 

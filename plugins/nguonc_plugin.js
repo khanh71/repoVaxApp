@@ -11,7 +11,7 @@ function getManifest() {
         "iconUrl": "https://stpaulclinic.vn/vaapp/plugins/nguonC.png",
         "isEnabled": true,
         "type": "MOVIE",
-        "playerType": "embed",
+        "playerType": "embed"
     });
 }
 

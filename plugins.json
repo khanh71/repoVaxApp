@@ -51,6 +51,13 @@
             "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/missav.ico"
         },
         {
+            "id": "avdbapi",
+            "name": "AVDB JAV",
+            "version": "1.0.2",
+            "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/avdbapi_plugin.js",
+            "iconUrl": "https://avdbapi.com/favicon.ico"
+        },
+        {
             "id": "sextop1",
             "name": "Sextop1",
             "version": "1.1.4",
@@ -93,11 +100,18 @@
             "iconUrl": "https://tctv.pro/10cam-logo-app-light.jpg"
         },
         {
-            "id": "avdbapi",
-            "name": "AVDB JAV",
-            "version": "1.0.2",
-            "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/avdbapi_plugin.js",
-            "iconUrl": "https://avdbapi.com/favicon.ico"
+            "id": "tctv",
+            "name": "TCTV",
+            "version": "1.0.0",
+            "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/tctv_plugin.js",
+            "iconUrl": "https://tctv.pro/10cam-logo-app-light.jpg"
+        },
+        {
+            "id": "vbtv",
+            "name": "VeboTV",
+            "version": "1.0.0",
+            "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/vbtv_plugin.js",
+            "iconUrl": "https://vbtv.pro/vebo-icon.png"
         }
     ]
 }

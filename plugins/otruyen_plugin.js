@@ -6,7 +6,7 @@ function getManifest() {
     return JSON.stringify({
         "id": "otruyen",
         "name": "OTruyen",
-        "version": "1.0.0",
+        "version": "1.0.2",
         "baseUrl": "https://otruyenapi.com",
         "iconUrl": "https://otruyenapi.com/favicon.ico",
         "isEnabled": true,
@@ -17,6 +17,15 @@ function getManifest() {
 function getHomeSections() {
     return JSON.stringify([
         { slug: 'truyen-moi', title: 'Truyện Mới Cập Nhật', type: 'Grid', path: 'danh-sach' }
+    ]);
+}
+
+function getPrimaryCategories() {
+    return JSON.stringify([
+        { name: 'Truyện Mới', slug: 'truyen-moi' },
+        { name: 'Đang Phát Hành', slug: 'dang-phat-hanh' },
+        { name: 'Hoàn Thành', slug: 'hoan-thanh' },
+        { name: 'Sắp Ra Mắt', slug: 'sap-ra-mat' }
     ]);
 }
 
@@ -39,15 +48,22 @@ function getUrlList(slug, filtersJson) {
         var page = filters.page || 1;
         var baseUrl = "https://otruyenapi.com/v1/api";
 
+        // Danh sách các slug thuộc primary categories (dùng path danh-sach/)
+        var primarySlugs = ['truyen-moi', 'dang-phat-hanh', 'hoan-thanh', 'sap-ra-mat'];
+
         // Default: danh-sach/truyen-moi
         var finalPath = "/danh-sach/truyen-moi";
 
-        // Nếu có category filter
+        // Nếu có category filter (thể loại từ bộ lọc)
         if (filters.category) {
             finalPath = "/the-loai/" + filters.category;
-        } else if (slug && slug !== 'truyen-moi') {
-            // Nếu slug khác truyen-moi, dùng làm thể loại
-            finalPath = "/the-loai/" + slug;
+        } else if (slug) {
+            // Kiểm tra slug thuộc primary (danh-sach) hay thể loại (the-loai)
+            if (primarySlugs.indexOf(slug) !== -1) {
+                finalPath = "/danh-sach/" + slug;
+            } else {
+                finalPath = "/the-loai/" + slug;
+            }
         }
 
         var url = baseUrl + finalPath + "?page=" + page;
@@ -92,12 +108,19 @@ function parseListResponse(apiResponseJson) {
         var pagination = data.params?.pagination || {};
 
         var mangas = items.map(function (item) {
+            // Lấy chapter mới nhất từ chaptersLatest
+            var latestChapter = "";
+            if (item.chaptersLatest && item.chaptersLatest.length > 0) {
+                var chapterNum = item.chaptersLatest[0].chapter_name || "";
+                latestChapter = chapterNum ? "Chap " + chapterNum : "";
+            }
             return {
                 id: item.slug,
                 title: item.name,
                 posterUrl: getImageUrl(item.thumb_url),
                 backdropUrl: getImageUrl(item.thumb_url),
-                status: item.status || ""
+                status: item.status || "",
+                episode_current: latestChapter
             };
         });
 

@@ -37,6 +37,20 @@
             "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/clbpx.ico"
         },
         {
+            "id": "thapcam",
+            "name": "Thập Cẩm Fake",
+            "version": "1.0.3",
+            "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/thapcam_plugin.js",
+            "iconUrl": "https://tctv.pro/10cam-logo-app-light.jpg"
+        },
+        {
+            "id": "vmttv",
+            "name": "VMT TV",
+            "version": "1.0.0",
+            "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/vmttv_plugin.js",
+            "iconUrl": "https://raw.githubusercontent.com/vuminhthanh12/vuminhthanh12/refs/heads/main/Logo.png"
+        },
+        {
             "id": "missav",
             "name": "MissAV 1",
             "version": "1.0.9",
@@ -74,14 +88,14 @@
         {
             "id": "otruyen",
             "name": "OTruyen",
-            "version": "1.0.0",
+            "version": "1.0.2",
             "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/otruyen_plugin.js",
             "iconUrl": "https://otruyenapi.com/favicon.ico"
         },
         {
             "id": "sayhentai",
             "name": "SayHentai",
-            "version": "1.0.1",
+            "version": "1.0.2",
             "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/sayhentai_plugin.js",
             "iconUrl": "https://sayhentai.world/favicon-32x32.png"
         },
@@ -91,13 +105,6 @@
             "version": "1.0.0",
             "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/misskon_plugin.js",
             "iconUrl": "https://misskon.com/favicon.ico"
-        },
-        {
-            "id": "thapcam",
-            "name": "Thập Cẩm Fake",
-            "version": "1.0.3",
-            "scriptUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/thapcam_plugin.js",
-            "iconUrl": "https://tctv.pro/10cam-logo-app-light.jpg"
         }
     ]
 }

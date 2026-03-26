@@ -6,7 +6,7 @@ function getManifest() {
     return JSON.stringify({
         "id": "sayhentai",
         "name": "SayHentai",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "baseUrl": "https://sayhentai.vc",
         "iconUrl": "https://sayhentai.vc/apple-touch-icon.png",
         "isEnabled": true,
@@ -317,7 +317,7 @@ function parseCategoriesResponse(html) {
     var catRegex = /<ul[^>]*class="genres-menu[^"]*"[^>]*>([\s\S]*?)<\/ul>/i;
     var block = html.match(catRegex);
     if (block) {
-        var linkRegex = /<a[^>]+href="https:\/\/sayhentai\.world\/genre\/([^"\/]+)"[^>]*>([^<]+)<\/a>/gi;
+        var linkRegex = /<a[^>]+href="https:\/\/sayhentai\.vc\/genre\/([^"\/]+)"[^>]*>([^<]+)<\/a>/gi;
         var m;
         while ((m = linkRegex.exec(block[1])) !== null) {
             categories.push({ name: PluginUtils.cleanText(m[2]), slug: "genre/" + m[1] });

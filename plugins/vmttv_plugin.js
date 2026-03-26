@@ -11,7 +11,8 @@ function getManifest() {
         "iconUrl": "https://raw.githubusercontent.com/vuminhthanh12/vuminhthanh12/refs/heads/main/Logo.png",
         "isEnabled": true,
         "type": "VIDEO",
-        "layoutType": "HORIZONTAL"
+        "layoutType": "HORIZONTAL",
+        "playerType": "exoplayer"
     });
 }
 
@@ -23,12 +24,9 @@ function getHomeSections() {
 
 function getPrimaryCategories() {
     return JSON.stringify([
-        { name: 'Tất cả', slug: 'all' },
-        { name: 'Kubo Network', slug: 'kubo-network' },
-        { name: 'SG Network', slug: 'sg-network' },
         { name: 'Sự Kiện', slug: 'su-kien' },
-        { name: 'THỂ THAO QUỐC TẾ', slug: 'the-thao-quoc-te' },
-        { name: '⚽ Thể thao quốc tế', slug: 'bong-da-quoc-te' },
+        { name: 'THỂ THAO QT', slug: 'the-thao-quoc-te' },
+        { name: '⚽ Thể thao QT', slug: 'bong-da-quoc-te' },
         { name: 'TVB', slug: 'tvb' },
         { name: 'LIVE EVENTS 🔴', slug: 'live-events' },
         { name: 'Sự Kiện TV360', slug: 'su-kien-tv360' },
@@ -90,8 +88,6 @@ function getUrlYears() { return ""; }
 // =============================================================================
 
 var CATEGORY_MAP = {
-    'kubo-network': 'Kubo Network',
-    'sg-network': 'SG Network',
     'su-kien': 'Sự Kiện',
     'the-thao-quoc-te': 'THỂ THAO QUỐC TẾ',
     'bong-da-quoc-te': '⚽| Thể thao quốc tế',
@@ -277,7 +273,7 @@ function parseMovieDetail(apiResponseJson, apiUrl) {
         return JSON.stringify({
             id: makeChannelId(channel),
             title: channel.name,
-            originName: channel.group || "",
+            originName: "",
             posterUrl: channel.logo || "",
             backdropUrl: channel.logo || "",
             description: description,

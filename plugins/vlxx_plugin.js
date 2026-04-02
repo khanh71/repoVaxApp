@@ -6,14 +6,14 @@ function getManifest() {
     return JSON.stringify({
         "id": "vlxx",
         "name": "VLXX",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "baseUrl": "https://vlxx.bz",
         "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/vlxx.ico",
         "isEnabled": true,
         "isAdult": true,
         "type": "MOVIE",
         "playerType": "embed",
-        "layoutType": "VERTICAL"
+        "layoutType": "HORIZONTAL"
     });
 }
 
@@ -98,7 +98,6 @@ function getUrlYears() { return ""; }
 
 function parseListResponse(html) {
     var items = [];
-    // Using string split to avoid regex engine complexity on huge HTML string
     var blocks = html.split('class="video-item"');
 
     for (var i = 1; i < blocks.length; i++) {
@@ -117,7 +116,7 @@ function parseListResponse(html) {
         }
         var thumb = thumbMatch ? thumbMatch[1] : "";
 
-        // Exclude 64 bit placeholder images
+        // Exclude base64 placeholder images
         if (thumb && thumb.indexOf("data:image") === 0) thumb = "";
 
         if (link && title) {
@@ -179,7 +178,7 @@ function parseMovieDetail(html) {
         var posterUrl = ogImg ? ogImg[1] : "";
 
         var castsArr = [];
-        var castRegex = /<div[^>]*class=["']actress-tag["'][^>]*><a[^>]*>([\s\S]*?)<\/a><\/div>/gi;
+        var castRegex = /<div[^>]*class=["']actress-tag["'][^>]*><a[^>]*>([\s\S]*?)<\/a>/gi;
         var castMatch;
         while ((castMatch = castRegex.exec(html)) !== null) {
             castsArr.push(castMatch[1].replace(/<[^>]+>/g, '').trim());
@@ -196,28 +195,52 @@ function parseMovieDetail(html) {
             }
         }
 
+        // =====================================================================
+        // STRATEGY: Extract video URL cho WebView embed
+        // Trang vlxx load iframe qua AJAX POST (App không hỗ trợ POST).
+        // Ta trích xuất URL canonical của trang để WebView tự load và chạy JS.
+        // PlayerViewModel fallback: nếu getStreamLink trả rỗng và episode.id
+        // là URL http → dùng làm WebView embed URL.
+        // =====================================================================
+
         var servers = [];
 
-        // Trích xuất link iframe Stream từ thẻ <div class="desktop video-player">
-        var iframeMatch = html.match(/<div[^>]*class=["'][^"']*video-player[^"']*["'][^>]*>[\s\S]*?<iframe[^>]*src=["']([^"']+)["']/i)
-            || html.match(/<iframe[^>]*src=["']([^"']+)["'][^>]*scrolling/i);
+        // Lấy URL canonical (hoặc og:url) từ trang
+        var canonicalMatch = html.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["']/i)
+            || html.match(/<meta[^>]*property=["']og:url["'][^>]*content=["']([^"']+)["']/i);
+        var pageUrl = canonicalMatch ? canonicalMatch[1] : "";
 
-        if (iframeMatch) {
-            var embedUrl = iframeMatch[1];
+        // Fallback: trích data-id để xây dựng URL
+        if (!pageUrl) {
+            var dataIdMatch = html.match(/data-id=["'](\d+)["']/i);
+            if (dataIdMatch) {
+                pageUrl = "https://vlxx.bz/" + dataIdMatch[1];
+            }
+        }
+
+        // Trích xuất thông tin server từ HTML
+        var serverButtons = html.match(/onclick=["']server\(\d+,\d+\)["']/gi);
+        if (serverButtons && serverButtons.length > 0) {
+            // Chỉ cần 1 entry vì video chỉ có 1 tập (Full)
+            // episode.id = full page URL → WebView sẽ load trang và tự chạy JS
+            if (pageUrl) {
+                servers.push({
+                    name: "VLStream",
+                    episodes: [{
+                        id: pageUrl,
+                        name: "Full",
+                        slug: "full"
+                    }]
+                });
+            }
+        }
+
+        // Fallback nếu không tìm thấy server buttons nhưng có pageUrl
+        if (servers.length === 0 && pageUrl) {
             servers.push({
                 name: "VLStream",
                 episodes: [{
-                    id: embedUrl,
-                    name: "Full",
-                    slug: "full"
-                }]
-            });
-        } else {
-            // Ultimate fallback for servers if regex fails
-            servers.push({
-                name: "Unknown",
-                episodes: [{
-                    id: "",
+                    id: pageUrl,
                     name: "Full",
                     slug: "full"
                 }]
@@ -247,45 +270,80 @@ function parseMovieDetail(html) {
     }
 }
 
+// parseDetailResponse: App gọi hàm này với HTML từ getUrlDetail(episode.id)
+// Vì episode.id = page URL, HTML sẽ là trang detail (không có iframe)
+// → Trả về empty URL để App fallback dùng episode.id cho WebView
 function parseDetailResponse(html, fallbackUrl) {
     try {
-        var streamUrl = fallbackUrl || "";
-        var isEmbed = true;
+        // Thử trích xuất trực tiếp nếu có thể (trường hợp HTML có sẵn iframe)
+        var iframeMatch = html.match(/<iframe[^>]*src=["']([^"']*vlstream[^"']*)["']/i);
+        if (iframeMatch) {
+            return JSON.stringify({
+                url: iframeMatch[1],
+                isEmbed: true,
+                headers: {
+                    "Referer": "https://vlxx.bz/"
+                }
+            });
+        }
 
-        if (html) {
-            var fileMatch = html.match(/"file"\s*:\s*"(https?[^"]+\.vl[^"]*)"/i);
-            if (fileMatch) {
-                streamUrl = fileMatch[1];
-                isEmbed = false;
-            } else {
-                var sourcesMatch = html.match(/sources\s*:\s*(\[[^\]]+\])/i);
-                if (sourcesMatch) {
-                    try {
-                        var sources = JSON.parse(sourcesMatch[1]);
-                        if (sources && sources.length > 0 && sources[0].file) {
-                            streamUrl = sources[0].file;
-                            isEmbed = false;
+        // Trả URL rỗng → App sẽ fallback dùng episode.id (trang gốc) cho WebView embed
+        // WebView sẽ load trang, JavaScript tự chạy AJAX, inject iframe & player
+        return JSON.stringify({
+            url: "",
+            isEmbed: false,
+            headers: {}
+        });
+    } catch (error) {
+        return JSON.stringify({ url: "", isEmbed: false, headers: {} });
+    }
+}
+
+// parseEmbedResponse: Trích xuất stream URL từ embed page (vlstream.net)
+// Nếu App fetch được embed page thành công
+function parseEmbedResponse(html, url) {
+    try {
+        // Tìm file .vl từ sources array hoặc window.$$ops
+        var fileMatch = html.match(/"file"\s*:\s*"(https?[^"]+\.vl[^"]*)"/i);
+        if (fileMatch) {
+            return JSON.stringify({
+                url: fileMatch[1],
+                isEmbed: false,
+                headers: {
+                    "Referer": "https://play.vlstream.net/"
+                }
+            });
+        }
+
+        var sourcesMatch = html.match(/sources\s*:\s*(\[[^\]]+\])/i);
+        if (sourcesMatch) {
+            try {
+                var sources = JSON.parse(sourcesMatch[1]);
+                if (sources && sources.length > 0 && sources[0].file) {
+                    return JSON.stringify({
+                        url: sources[0].file,
+                        isEmbed: false,
+                        headers: {
+                            "Referer": "https://play.vlstream.net/"
                         }
-                    } catch (e) {
-                        var regexFile = sourcesMatch[1].match(/"file"\s*:\s*"([^"]+)"/i);
-                        if (regexFile) {
-                            streamUrl = regexFile[1];
-                            isEmbed = false;
+                    });
+                }
+            } catch (e) {
+                var regexFile = sourcesMatch[1].match(/"file"\s*:\s*"([^"]+)"/i);
+                if (regexFile) {
+                    return JSON.stringify({
+                        url: regexFile[1],
+                        isEmbed: false,
+                        headers: {
+                            "Referer": "https://play.vlstream.net/"
                         }
-                    }
+                    });
                 }
             }
         }
 
-        return JSON.stringify({
-            url: streamUrl,
-            isEmbed: isEmbed,
-            headers: {
-                "Referer": "https://vlxx.bz/",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
-        });
-    } catch (error) {
-        return JSON.stringify({ url: fallbackUrl || "", isEmbed: true, headers: {} });
+        return JSON.stringify({ url: url || "", isEmbed: true, headers: {} });
+    } catch (e) {
+        return JSON.stringify({ url: url || "", isEmbed: true, headers: {} });
     }
 }

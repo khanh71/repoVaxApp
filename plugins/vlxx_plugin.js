@@ -313,17 +313,40 @@ function parseDetailResponse(html, fetchedUrl) {
 function parseEmbedResponse(html, url) {
     try {
         // === CASE 1: AJAX JSON response (chứa "player" key) ===
-        if (html.indexOf('"player"') !== -1 && html.indexOf('iframe') !== -1) {
-            var iframeMatch = html.match(/src=\\?"(https?:[^"\\]+)\\?"/i);
-            if (iframeMatch) {
-                var embedUrl = iframeMatch[1].replace(/\\\//g, '/');
-                return JSON.stringify({
-                    url: embedUrl,
-                    isEmbed: true,
-                    headers: {
-                        "Referer": "https://vlxx.bz/"
+        // Response dạng: {"player":"<iframe src=\"https:\/\/play.vlstream.net\/embed\/hash\/s1\" ...>"}
+        // Cần JSON.parse để unescape \/ thành / và \" thành "
+        if (html.indexOf('"player"') !== -1) {
+            try {
+                var jsonObj = JSON.parse(html);
+                if (jsonObj && jsonObj.player) {
+                    var playerHtml = jsonObj.player;
+                    // playerHtml giờ là clean HTML: <iframe src="https://play.vlstream.net/embed/hash/s1" ...>
+                    var srcMatch = playerHtml.match(/src=["']([^"']+)["']/i);
+                    if (srcMatch) {
+                        return JSON.stringify({
+                            url: srcMatch[1],
+                            isEmbed: true,
+                            headers: {
+                                "Referer": "https://vlxx.bz/"
+                            }
+                        });
                     }
-                });
+                }
+            } catch (parseErr) {
+                // Fallback: regex trên raw JSON string
+                // Unescape \/ trước khi match
+                var cleaned = html.replace(/\\\//g, '/');
+                // Match src=\"URL\" hoặc src=\\"URL\\"
+                var iframeMatch = cleaned.match(/src=(?:\\\\)?["'](https?:\/\/[^"'\\]+)(?:\\\\)?["']/i);
+                if (iframeMatch) {
+                    return JSON.stringify({
+                        url: iframeMatch[1],
+                        isEmbed: true,
+                        headers: {
+                            "Referer": "https://vlxx.bz/"
+                        }
+                    });
+                }
             }
         }
 
@@ -379,8 +402,9 @@ function parseEmbedResponse(html, url) {
             });
         }
 
-        return JSON.stringify({ url: url || "", isEmbed: true, headers: {} });
+        // Không tìm được gì → trả empty để dừng recursive loop
+        return JSON.stringify({ url: "", isEmbed: false, headers: {} });
     } catch (e) {
-        return JSON.stringify({ url: url || "", isEmbed: true, headers: {} });
+        return JSON.stringify({ url: "", isEmbed: false, headers: {} });
     }
 }

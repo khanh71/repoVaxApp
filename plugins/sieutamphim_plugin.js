@@ -44,17 +44,29 @@ function getPrimaryCategories() {
 function parseSearchResponse(html, path) {
     try {
         var movies = [];
-        // Pattern dựa trên snippet người dùng cung cấp
-        var regex = /<div class="col post-item"[\s\S]*?<a href="([^"]+)"[\s\S]*?src="([^"]+)"[\s\S]*?post-title[^>]*?>([\s\S]*?)<\/a>[\s\S]*?data-fulltext="([^"]*)"/g;
-        var match;
-        while ((match = regex.exec(html)) !== null) {
-            movies.push({
-                id: match[1], // Dùng URL làm ID
-                title: match[3].trim().replace(/<[^>]*>/g, ""),
-                posterUrl: match[2],
-                link: match[1],
-                quality: match[4] || "HD"
-            });
+        // Tách từng item phim để parse cho chuẩn
+        var items = html.split('class="col post-item"');
+        for (var i = 1; i < items.length; i++) {
+            var item = items[i];
+            
+            var linkMatch = item.match(/href="([^"]+)"/i);
+            var posterMatch = item.match(/src="([^"]+)"/i);
+            var titleMatch = item.match(/post-title[^>]*?>([\s\S]*?)<\/a>/i);
+            var qualityMatch = item.match(/data-fulltext="([^"]*)"/i);
+            
+            if (linkMatch && titleMatch) {
+                var title = titleMatch[1].replace(/<[^>]*>/g, "").trim();
+                // Một số ảnh bị resize qua i0.wp.com hoặc i2.wp.com, ta lấy gốc nếu có thể
+                var posterUrl = posterMatch ? posterMatch[1] : "";
+                
+                movies.push({
+                    id: linkMatch[1],
+                    title: title,
+                    posterUrl: posterUrl,
+                    link: linkMatch[1],
+                    quality: (qualityMatch ? qualityMatch[1] : "").trim() || "HD"
+                });
+            }
         }
         return JSON.stringify(movies);
     } catch (error) { return "[]"; }

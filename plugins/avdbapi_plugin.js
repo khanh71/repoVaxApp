@@ -7,7 +7,7 @@ function getManifest() {
         "id": "avdbapi",
         "name": "AVDB JAV",
         "version": "1.0.3",
-        "baseUrl": "https://avdbapi.com",
+        "baseUrl": "https://avdbapi.com/api.php/provide/vod",
         "iconUrl": "https://avdbapi.com/favicon.ico",
         "isEnabled": true,
         "isAdult": true,

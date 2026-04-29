@@ -6,7 +6,7 @@ function getManifest() {
     return JSON.stringify({
         "id": "missav",
         "name": "MissAV",
-        "version": "1.1.4",
+        "version": "1.1.2",
         "baseUrl": "https://missav.media",
         "iconUrl": "https://raw.githubusercontent.com/youngbi/repo/main/plugins/missav.ico",
         "isEnabled": true,
